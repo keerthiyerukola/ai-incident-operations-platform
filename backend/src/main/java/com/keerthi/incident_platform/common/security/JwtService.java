@@ -7,14 +7,17 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class JwtService {
+     @Value("${jwt.secret}")
+    private String secretKey;
 
-    private final String secretKey =
-            "my-super-secret-key-for-incident-platform-2026";
+    @Value("${jwt.expiration}")
+    private long expirationTime;
 
-    private final long expirationTime = 1000 * 60 * 60;
+    
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(
@@ -41,7 +44,14 @@ public class JwtService {
             .getPayload()
             .getSubject();
 }
-
+public String extractRole(String token) {
+    return Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .get("role", String.class);
+}
 public boolean isTokenValid(String token) {
     try {
         Jwts.parser()
